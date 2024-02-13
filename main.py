@@ -10,7 +10,7 @@ BRANDBOOM_API_KEY = '34C30B02DDD61413CD2CE0B3208C170F'
 BRANDBOOM_URL = 'https://manage.brandboom.com/api/v2/customers/search'
 DATE_MODIFIED = "2024-02-01"
 
-MAILCHIMP_API_KEY = '7611c6bc2f48ebda83d3a40969fcb697-us11'
+MAILCHIMP_API_KEY = '9529dc5020ec4b3d0229f2c98023e52a-us11'
 MAILCHIMP_AUDIENCE_ID = 'aa28f1bed7'
 MAILCHIMP_SERVER_PREFIX = 'us11'
 
@@ -78,7 +78,7 @@ def prepare_member_info(customer):
         "STATECODE": customer.get('stateCode'),
         "POSTALCODE": customer.get('postalCode'),
         "COUNTRY": customer.get('country'),
-        "COUNTRYCOD": customer.get('countryCode')
+        "COUNTRYC": customer.get('countryCode')
     }
     
     return {
