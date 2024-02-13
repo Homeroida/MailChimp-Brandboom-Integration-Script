@@ -13,7 +13,7 @@ This project aims to integrate customer data obtained from the Brandboom API wit
 1. Clone the repository to your local machine:
 
 ```bash
-git clone <repository_url>
+git clone https://github.com/Homeroida/MailChimp-Brandboom-Integration-Script.git
 ```
 
 2. Install the required dependencies:
@@ -24,7 +24,7 @@ pip install -r requirements.txt
 
 ## Configuration
 
-Before running the script, make sure to configure the following constants in `script.py`:
+Before running the script, make sure to configure the following constants in `main.py`:
 
 - `BRANDBOOM_API_KEY`: Your Brandboom API key.
 - `BRANDBOOM_URL`: Brandboom API endpoint for customer data.
@@ -38,7 +38,7 @@ Before running the script, make sure to configure the following constants in `sc
 To run the integration script:
 
 ```bash
-python script.py
+python main.py
 ```
 
 The script will fetch customer data from Brandboom, process it, and add members to the specified Mailchimp audience.
