@@ -1,104 +1,111 @@
 import requests
-import json
+import time
+import schedule
+import logging
 import mailchimp_marketing as MailchimpMarketing
 from mailchimp_marketing.api_client import ApiClientError
 
-# Brandboom API configuration
+# Configuration constants
 BRANDBOOM_API_KEY = '34C30B02DDD61413CD2CE0B3208C170F'
 BRANDBOOM_URL = 'https://manage.brandboom.com/api/v2/customers/search'
 DATE_MODIFIED = "2024-02-01"
 
-# Mailchimp configuration
-YOUR_API_KEY = '76106b99b98a4631ddc7cb848ffb9fa3-us11'
+MAILCHIMP_API_KEY = '76106b99b98a4631ddc7cb848ffb9fa3-us11'
 MAILCHIMP_AUDIENCE_ID = 'aa28f1bed7'
-YOUR_SERVER_PREFIX = 'us11'
+MAILCHIMP_SERVER_PREFIX = 'us11'
 
-# Initialize Mailchimp client
-mailchimp = MailchimpMarketing.Client()
-mailchimp.set_config({
-    "api_key": YOUR_API_KEY,
-    "server": YOUR_SERVER_PREFIX
-})
+# Configure logging
+logging.basicConfig(filename='script_logs.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def get_brandboom_data():
     """
-    Sends a GET request to the Brandboom API and returns the JSON response.
+    Fetches customer data from the Brandboom API.
     """
-    brandboom_headers = {
-        "accept": "application/json",
-        "X-Api-Key": BRANDBOOM_API_KEY,
-    }
+    headers = {"accept": "application/json", "X-Api-Key": BRANDBOOM_API_KEY}
+    params = {"dateModified": DATE_MODIFIED}
 
-    brandboom_params = {
-        "dateModified": DATE_MODIFIED
-    }
-
-    response = requests.get(BRANDBOOM_URL, headers=brandboom_headers, params=brandboom_params)
-    return response.json() if response.status_code == 200 else None
+    response = requests.get(BRANDBOOM_URL, headers=headers, params=params)
+    response.raise_for_status()  # Raise exception for non-200 status codes
+    return response.json()
 
 def add_member_to_mailchimp(member_info):
     """
     Adds a member to the Mailchimp audience.
     """
+    mailchimp = MailchimpMarketing.Client()
+    mailchimp.set_config({"api_key": MAILCHIMP_API_KEY, "server": MAILCHIMP_SERVER_PREFIX})
+
     try:
         response = mailchimp.lists.add_list_member(MAILCHIMP_AUDIENCE_ID, member_info)
-        print("Added member with email:", member_info['email_address'])
+        logging.info(f"Added member with email: {member_info['email_address']}")
     except ApiClientError as error:
-        print("An exception occurred while adding member to Mailchimp:", error)
+        logging.error(f"Email already exists in Mailchimp: {error}")
 
 def process_customer_data(data):
     """
-    Processes customer data from Brandboom API response.
+    Processes customer data from the Brandboom API response.
     """
-    if 'value' in data:
-        customers = data['value']['customers']
-        for customer in customers:
-            if 'email' not in customer or not customer['email']:
-                print("Skipping customer entry without email:", customer)
-                continue
-            member_info = prepare_member_info(customer)
-            add_member_to_mailchimp(member_info)
-    else:
-        print("No customer data found in the Brandboom API response.")
+    if 'value' not in data:
+        logging.warning("No customer data found in the Brandboom API response.")
+        return
+
+    customers = data['value']['customers']
+    for customer in customers:
+        email = customer.get('email')
+        if not email:
+            logging.warning(f"Skipping customer entry without email: {customer}")
+            continue
+
+        member_info = prepare_member_info(customer)
+        add_member_to_mailchimp(member_info)
 
 def prepare_member_info(customer):
     """
     Prepares member info for Mailchimp from customer data.
     """
+    merge_fields = {
+        "FNAME": customer.get('buyerName'),
+        "LNAME": "",
+        "ADDRESS1": customer.get('address1'),
+        "PHONE": customer.get('phone'),
+        "BUYERNAME": customer.get('buyerName'),
+        "CUSTOMERID": customer.get('customerID'),
+        "ACCOUNTID": customer.get('accountID'),
+        "CCODE1": customer.get('customerCode1'),
+        "CCODE2": customer.get('customerCode2'),
+        "ADDRESS2": customer.get('address2'),
+        "CITY": customer.get('city'),
+        "STATECODE": customer.get('stateCode'),
+        "POSTALCODE": customer.get('postalCode'),
+        "COUNTRY": customer.get('country'),
+        "COUNTRYCOD": customer.get('countryCode')
+    }
+    
     return {
         "email_address": customer.get('email'),
         "status": "subscribed",
-        "merge_fields": {
-            "FNAME": customer.get('buyerName'),
-            "LNAME": "",  # You can add last name if available
-            "ADDRESS1": customer.get('address1'),
-            "PHONE": customer.get('phone'),
-            "BUYERNAME": customer.get('buyerName'),
-            "CUSTOMERID": customer.get('customerID'),
-            "ACCOUNTID": customer.get('accountID'),
-            "CCODE1": customer.get('customerCode1'),
-            "CCODE2": customer.get('customerCode2'),
-            "ADDRESS2": customer.get('address2'),
-            "CITY": customer.get('city'),
-            "STATECODE": customer.get('stateCode'),
-            "POSTALCODE": customer.get('postalCode'),
-            "COUNTRY": customer.get('country'),
-            "COUNTRYCOD": customer.get('countryCode')
-        }
+        "merge_fields": merge_fields
     }
 
-def main():
+def job():
     """
-    Main function to orchestrate the process.
+    Job to be scheduled.
     """
     try:
         data = get_brandboom_data()
         if data:
             process_customer_data(data)
-        else:
-            print("Failed to retrieve customer data from the Brandboom API.")
+    except requests.RequestException as e:
+        logging.error(f"Error fetching data from Brandboom API: {e}")
+    except ApiClientError as e:
+        logging.error(f"Mailchimp API error: {e}")
     except Exception as e:
-        print("An exception occurred:", str(e))
+        logging.error(f"An unexpected error occurred: {e}")
 
-if __name__ == "__main__":
-    main()
+# Schedule the job to run every 5 minutes
+schedule.every(1).minutes.do(job)
+
+# Infinite loop to run the scheduler
+while True:
+    schedule.run_pending()
+    time.sleep(1)
