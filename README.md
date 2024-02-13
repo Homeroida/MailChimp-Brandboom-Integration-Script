@@ -8,7 +8,25 @@ This project aims to integrate customer data obtained from the Brandboom API wit
 - **README.md**: This file, providing an overview of the project.
 - **script_logs.log**: Log file to capture script execution logs.
 
-## Installation
+## Installation and Setup
+
+### Setting Up a Virtual Environment
+
+Before you begin, it's advisable to set up a Python virtual environment. This isolates your project and avoids conflicts with other packages. Here's how to create one:
+
+#### For macOS and Linux:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+#### For Windows:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
 
 1. Clone the repository to your local machine:
 
