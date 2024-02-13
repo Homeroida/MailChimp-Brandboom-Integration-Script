@@ -10,7 +10,7 @@ BRANDBOOM_API_KEY = '34C30B02DDD61413CD2CE0B3208C170F'
 BRANDBOOM_URL = 'https://manage.brandboom.com/api/v2/customers/search'
 DATE_MODIFIED = "2024-02-01"
 
-MAILCHIMP_API_KEY = '76106b99b98a4631ddc7cb848ffb9fa3-us11'
+MAILCHIMP_API_KEY = '7611c6bc2f48ebda83d3a40969fcb697-us11'
 MAILCHIMP_AUDIENCE_ID = 'aa28f1bed7'
 MAILCHIMP_SERVER_PREFIX = 'us11'
 
@@ -91,6 +91,7 @@ def job():
     """
     Job to be scheduled.
     """
+    print('start a job')
     try:
         data = get_brandboom_data()
         if data:
