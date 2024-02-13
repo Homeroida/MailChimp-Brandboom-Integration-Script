@@ -102,8 +102,11 @@ def job():
     except Exception as e:
         logging.error(f"An unexpected error occurred: {e}")
 
-# Schedule the job to run every 5 minutes
-schedule.every(1).minutes.do(job)
+# Run the job immediately
+job()
+
+# Schedule the job to run every 3 hours after the initial run
+schedule.every(3).hours.do(job)
 
 # Infinite loop to run the scheduler
 while True:
